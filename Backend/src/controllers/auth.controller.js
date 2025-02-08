@@ -3,9 +3,9 @@ import User from "../models/user.model.js";
 import { generate_token } from "../lib/util.js";
 import cloudinary from "../lib/cloudinary.js";
 import { toast } from "react-hot-toast";
- 
-export const signup = async (req, res) => {  
-  try { 
+
+export const signup = async (req, res) => {
+  try {
     const { Fullname, email, password, Username } = req.body;
     if (!Fullname || !email || !password || !Username) {
       return res.status(400).json({ message: "All fields are required" });
@@ -13,20 +13,16 @@ export const signup = async (req, res) => {
 
     const user = await User.findOne({ email });
     if (user) {
+      return res.status(400).json({ message: " This mail already exists" });
+    }
+    if (password.length < 6) {
       return res
         .status(400)
-        .json({ message: "Error This mail already exists" });
-    }
-    if (password.length < 6) { 
-      return res 
-        .status(400)
-        .json({ message: "password must be atleast 6 charcters " });
+        .json({ message: "Password must be atleast 6 charcters " });
     }
     const username = await User.findOne({ Username });
     if (username) {
-      return res
-        .status(400)
-        .json({ message: "Error This username already exists" });
+      return res.status(400).json({ message: "This username already exists" });
     }
 
     const salt = await bcrypt.genSalt(10);
@@ -53,11 +49,11 @@ export const signup = async (req, res) => {
       Fullname: newuser_model.Fullname,
       email: newuser_model.email,
       Username: newuser_model.Username,
-      createdAt: user.createdAt,
+      createdAt: newuser_model.createdAt,
     });
   } catch (error) {
-    // console.log(error);
-    return res.status(500).json({ message: "invalid user data " });
+    console.log(error);
+    return res.status(400).json({ message: "invalid user data provided" });
   }
 };
 
@@ -66,34 +62,38 @@ export const login = async (req, res) => {
     const { email, password } = req.body;
 
     if (!email || !password) {
-      return res.status(404).json({ message: "All fields are required" });
+      return res.status(400).json({ message: "All fields are required" });
     }
     if (password.length < 6) {
       return res
-        .status(404)
-        .json({ message: "password must be atleast 6 charcters " });
+        .status(400)
+        .json({ message: "Password must be atleast 6 charcters " });
     }
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ message: "user not found" });
+      return res
+        .status(404)
+        .json({ message: "Invalid login-check your credentials" });
     }
 
-    if (user) {
-      if (bcrypt.compare(password, user.password)) {
-        generate_token(user._id, res);
-        return res.status(200).json({  
-          message: "user logged in",
-          user_id: user._id,
-          Fullname: user.Fullname,
-          email: user.email,
-          Username: user.Username,
-          profile_pic: user.profile_pic,
-          createdAt: user.createdAt,
-        });
-      } else {
-        return res.status(404).json({ message: "invalid password" });
-      }
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res
+        .status(404)
+        .json({ message: "Invalid login-check your credentials" });
     }
+
+    generate_token(user._id, res);
+    return res.status(200).json({
+      message: "user logged in",
+      user_id: user._id,
+      Fullname: user.Fullname,
+      email: user.email,
+      Username: user.Username,
+      profile_pic: user.profile_pic,
+      createdAt: user.createdAt,
+    });
   } catch (error) {
     return res.status(404).json({ message: "invalid user data " });
   }
@@ -101,7 +101,7 @@ export const login = async (req, res) => {
 
 export const logout = (req, res) => {
   try {
-    res.clearCookie("jwt");
+    res.clearCookie("jwt", { maxAge: 0, httpOnly: true, secure: true });
     return res.status(200).json({ message: "user logged out" });
   } catch (error) {
     // console.log("error in logging out:", error.message);
@@ -159,6 +159,6 @@ export const check_Auth = async (req, res) => {
     return res.status(201).json(req.user);
   } catch (error) {
     console.log("error in checking auth controller  ", error.message);
-    return res.status(400).json({ message: "error in checking authrisation" });
+    return res.status(400).json({ message: "error in checking authorisation" });
   }
 };

@@ -1,0 +1,12 @@
+{
+  "name": "chat_app",
+  "version": "1.0.0",
+  "description": "WE CHAT APPLICATION CREATED BY SURYA 0N FEB 5 2024",
+  "main": "index.js",
+  "scripts": {
+    "build": "npm install --prefix Backend && npm install --prefix Frontend  && npm run build --prefix Frontend",
+    "start": " npm run start --prefix Backend"
+  },
+  "author": "",
+  "license": "ISC"
+}

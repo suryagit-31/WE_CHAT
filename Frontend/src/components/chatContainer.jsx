@@ -1,19 +1,46 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useChatStore } from "../store/useChatstore";
 import Chatheader from "./chatheader";
 import Messageinput from "./messageinput";
 import Messageskeleton from "./skeletons/messageskeleton";
 import { useAuthStore } from "../store/useAuthStore";
 import { format_Time } from "../libs/util";
+import default_profile from "../assets/default_profile.jpg";
+import { LoaderCircle } from "lucide-react";
 
 const chatContainer = () => {
-  const { selectedUser, messages, getMessages, ismessagesloading } =
-    useChatStore();
+  const {
+    selectedUser,
+    messages,
+    getMessages,
+    ismessagesloading,
+    subscribetoMessages,
+    unsubscribeTomessages,
+  } = useChatStore();
+
+  const messageendref = useRef(null);
+
   const { authUser } = useAuthStore();
 
   useEffect(() => {
+    if (!selectedUser || !authUser) return;
     getMessages(selectedUser._id);
-  }, [selectedUser._id]);
+    subscribetoMessages();
+
+    return () => unsubscribeTomessages();
+  }, [
+    selectedUser._id,
+    getMessages,
+    subscribetoMessages,
+    unsubscribeTomessages,
+  ]);
+
+  useEffect(() => {
+    if (messageendref.current && messages && authUser) {
+      messageendref.current?.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [messages]);
+
 
   if (ismessagesloading)
     return (
@@ -32,8 +59,9 @@ const chatContainer = () => {
           <div
             key={message._id}
             className={`chat ${
-              message.senderId === authUser._id ? "chat-end" : "chat-start"
+              message.senderId === authUser?._id ? "chat-end " : "chat-start"
             }`}
+            ref={messageendref}
           >
             <div className="chat-image avatar">
               <div className="size-10 rounded-full">
@@ -41,7 +69,7 @@ const chatContainer = () => {
                   src={
                     message.senderId === authUser._id
                       ? authUser.profile_pic
-                      : selectedUser.profile_pic
+                      : selectedUser.profile_pic || default_profile
                   }
                   alt="Profile Picture"
                 />

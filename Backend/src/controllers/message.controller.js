@@ -1,6 +1,8 @@
 import cloudinary from "../lib/cloudinary.js";
+import { get_reciver_socketId } from "../lib/socket.js";
 import Message from "../models/message.model.js";
 import User from "../models/user.model.js";
+import { io } from "../lib/socket.js";
 
 export const getusers_Sidebar = async (req, res) => {
   try {
@@ -25,13 +27,13 @@ export const getMessages = async (req, res) => {
       $or: [
         { senderId: myId, recieverId: usertochatId },
         { senderId: usertochatId, recieverId: myId },
-      ], 
+      ],
     });
 
     return res.status(200).json(messages);
   } catch (error) {
     console.log("error is fetching messages", error.message);
-     return res.status(404).json({ message: "internal server error" });
+    return res.status(404).json({ message: "internal server error" });
   }
 };
 
@@ -41,7 +43,7 @@ export const sendMessage = async (req, res) => {
     const { id: receiverId } = req.params;
     const senderId = req.user._id;
 
-    let imageUrl; 
+    let imageUrl;
 
     if (image) {
       const uploaded_image = await cloudinary.uploader.upload(image);
@@ -55,13 +57,19 @@ export const sendMessage = async (req, res) => {
       image: imageUrl,
     });
 
-    await newMessage.save(); 
+    await newMessage.save();
 
     //real time fetching  using socket io
 
-   return res.status(200).json(newMessage);
+    const reveiverSocketId = get_reciver_socketId(receiverId);
+
+    if (reveiverSocketId) {
+      io.to(reveiverSocketId).emit("newMessage", newMessage);
+    }
+
+    return res.status(200).json(newMessage);
   } catch (error) {
     console.log("error is sending message", error.message);
-   return  res.status(404).json({ message: "internal server error" });
+    return res.status(404).json({ message: "internal server error" });
   }
 };

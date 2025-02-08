@@ -11,7 +11,7 @@ const capitalizeFullName = (name) => {
     .join(" ");
 };
 
-const Base_backendUrl = "http://localhost:4000";
+const Base_backendUrl = import.meta.env.MODE === "development" ? "http://localhost:4000/api" : "/";
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -26,7 +26,6 @@ export const useAuthStore = create((set, get) => ({
   checkAuth_validity: async () => {
     try {
       const res = await axiosInstance.get("/auth/check");
-
       set({ authUser: res.data });
       get().connect_socket();
     } catch (error) {
@@ -43,13 +42,23 @@ export const useAuthStore = create((set, get) => ({
       const res = await axiosInstance.post("/auth/signup", data);
       //console.log("Signup successful, user data:", res.data);
       const fullname = capitalizeFullName(res.data.Fullname);
-      toast.success(`Welcome to WE CHAT ${fullname}`);
-      get.connect_socket();
+
       //console.log(res.data.createdAt);
       set({ authUser: res.data });
+
+      toast.success(`Welcome to WE CHAT ${fullname}`);
+
+      get().connect_socket();
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 1300);
     } catch (error) {
       toast.error(error.response?.data?.message || error.message);
-      //console.log("error in signup ",error.response?.data?.message || error.message );
+      /* console.log(
+        "error in signup ",
+        error.response?.data?.message || error.message
+      ); */
     } finally {
       set({ is_signingup: false });
     }
@@ -64,12 +73,21 @@ export const useAuthStore = create((set, get) => ({
 
       // console.log("Login successful, user data:", res.data);
       toast.success(`welcome  back ${fullname}`);
-      get().connect_socket();
+
       //console.log(res.data.createdAt);
       set({ authUser: res.data });
+
+      get().connect_socket();
+
+      setTimeout(() => {
+        window.location.reload();
+      }, 1300);
     } catch (error) {
+      /* console.log(
+        "error in login ",
+        error.response?.data?.message || error.message
+      ); */
       toast.error(error.response?.data?.message || error.message);
-      //console.log( "error in login ", error.response?.data?.message || error.message );
     } finally {
       set({ is_loggingin: false });
     }
@@ -82,10 +100,10 @@ export const useAuthStore = create((set, get) => ({
       toast.success("user logged out successfully");
       get().disconnect_socket();
     } catch (error) {
-      console.log(
+     /* console.log(
         "error in logout ",
         error.response?.data?.message || error.message
-      );
+      ); */
       toast.error(error.response?.data?.message || error.message);
     }
   },
@@ -108,22 +126,43 @@ export const useAuthStore = create((set, get) => ({
   },
 
   connect_socket: () => {
-    const { authUser } = get();
+    const { authUser, socket } = get();
     if (!authUser) {
-      console.log("Socket failed user authenticationr");
+      console.log("user is not logged in");
       return;
     }
-    if (get().socket?.connected) {
-      console.log("Socket already connected or no user");
-      return;
+
+    if (socket?.connected) {
+      console.log("socket is already connected..disconnecting old socket");
+      socket.disconnect(); // Ensure old socket is closed before reconnecting
     }
-    const socket = io(Base_backendUrl, {
-      withCredentials: true,
+
+    const new_socket = io(Base_backendUrl, {
+      query: {
+        userId: authUser._id,
+      },
     });
-    socket.on("connect", () => {
-      console.log("Connected to server with socket ID:", socket.id);
+
+    //console.log(new_socket);
+
+    new_socket.connect();
+    // socket.connect(); not useful but can be implemented some times
+    set({ socket: new_socket });
+
+    new_socket.on("newUser", (userId) => {
+      console.log("New user connected:", userId);
+    });
+
+    new_socket.on("getonlineUsers", (userIds) => {
+      set({ onlineUsers: userIds });
     });
   },
 
-  disconnect_socket: () => {},
+  disconnect_socket: () => {
+    const { socket } = get();
+    if (socket?.connected) {
+      socket.disconnect();
+      console.log("Disconnected from server");
+    }
+  },
 }));

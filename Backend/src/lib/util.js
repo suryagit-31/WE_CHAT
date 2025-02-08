@@ -8,7 +8,7 @@ export const generate_token = async (user_id, res) => {
 
   res.cookie("jwt", token, { 
     expires:  new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    httpOnly: true,
+    httpOnly: true, 
     sameSite: "strict",
   });
 

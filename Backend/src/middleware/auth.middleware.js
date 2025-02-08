@@ -3,13 +3,16 @@ import User from "../models/user.model.js";
 
 export const protected_Route = async (req, res, next) => {
   try {
-    const our_cookie = req.cookies.jwt;
+    const our_cookie =
+      req.cookies.jwt || req.headers.authorization?.split(" ")[1];
+
+    //console.log(our_cookie);
 
     if (!our_cookie) {
-     // console.log("no cookie found");
-      return res
-        .status(400)
-        .json({ message: "un authorised- No token provided" });
+       //console.log("no cookie found");
+      return res 
+        .status(401)
+        .json({ message: " un-authorised" });
     }
 
     const verify_user = jwt.verify(our_cookie, process.env.JWT_SECRET);
@@ -27,12 +30,12 @@ export const protected_Route = async (req, res, next) => {
       return res.status(400).json({ message: "user not found on this server" });
     }
 
-   // console.log("i have the user in this server ");
- 
-    req.user = user; 
-    next(); 
-  } catch (error) { 
-   // console.error("Error in protected_Route middleware:", error);
+   //  console.log("i have the user in this server ");
+
+    req.user = user;
+    next();
+  } catch (error) {
+    // console.error("Error in protected_Route middleware:", error);
     res.status(500).json({ message: "Internal Server Error in middle ware" });
   }
 };

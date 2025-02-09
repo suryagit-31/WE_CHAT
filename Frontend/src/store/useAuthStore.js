@@ -11,7 +11,7 @@ const capitalizeFullName = (name) => {
     .join(" ");
 };
 
-const Base_backendUrl = import.meta.env.MODE === "development" ? "http://localhost:4000/api" : "/";
+const Base_backendUrl = import.meta.env.MODE === "development" ? "http://localhost:4000" : "/";
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,

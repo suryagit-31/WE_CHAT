@@ -20,13 +20,19 @@ const __dirname = path.resolve();
 
 app.use(express.json());
 app.use(cookieParser());
+const allowedOrigins = [
+  "http://localhost:3000",
+  "https://we-chat-frontend.onrender.com",
+];
+
 app.use(
   cors({
-    origin: default_port,
+    origin: allowedOrigins,
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE"],
   })
 );
+
 
 app.use("/api/auth", Authrouter);
 app.use("/api/message", Messagerouter);

@@ -14,7 +14,7 @@ const default_port = "http://localhost:3000";
 
 app.use(express.json({ limit: "10mb" }));
 
-const Port = process.env.Port;
+const Port = process.env.PORT;
 
 const __dirname = path.resolve();
 
@@ -39,6 +39,6 @@ if (process.env.NODE_ENV === "production") {
   });
 }
 server.listen(Port, () => {
-  console.log(`listening on port ${Port} http://localhost:4000`);
+  console.log(`listening on the port ${Port}`);
   connect_db();
 });

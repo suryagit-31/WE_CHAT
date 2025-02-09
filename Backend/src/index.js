@@ -35,6 +35,9 @@ app.use(
 
 
 app.use("/api/auth", Authrouter);
+
+console.log("Auth routes registered");
+
 app.use("/api/message", Messagerouter);
 
 if (process.env.NODE_ENV === "production") {

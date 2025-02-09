@@ -22,7 +22,7 @@ app.use(express.json());
 app.use(cookieParser());
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://we-chat-frontend.onrender.com",
+  "https://we-chat-37q7.onrender.com",
 ];
 
 app.use(
